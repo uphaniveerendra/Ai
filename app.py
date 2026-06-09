@@ -20,13 +20,6 @@ st.set_page_config(page_title="Healthcare Fraud Detection", page_icon="🏥",
 
 COLORS = {"fraud":"#E74C3C","legit":"#2ECC71","primary":"#2C3E50","accent":"#3498DB","warn":"#F39C12"}
 
-# ════════════════════════════════════════════════════════════════════
-#  PASTE YOUR GOOGLE DRIVE FILE IDs BELOW
-#  How to get a File ID:
-#    1. Right-click file in Drive → Share → Anyone with link → Copy link
-#    2. Link looks like: https://drive.google.com/file/d/THIS_IS_THE_ID/view
-#    3. Paste only the ID part (the long code) below
-# ════════════════════════════════════════════════════════════════════
 DRIVE_IDS = {
     "train/Train_Labels.csv":       "1ulUdsg_gdjtLj36fsHBs8lcDlMqcRmPJ",
     "train/Train_Beneficiary.csv":  "1BVARtauqUavcWxIXVUlnfhVqJ0YxpcAN",
@@ -39,10 +32,7 @@ DRIVE_IDS = {
 
 }
 
-# ─────────────────────────────────────────────────────────────────────
-#  ROBUST Google Drive downloader
-#  Handles both small files and large files (virus-scan confirm page)
-# ─────────────────────────────────────────────────────────────────────
+
 @st.cache_data(show_spinner=False)
 def download_gdrive_csv(file_id: str) -> pd.DataFrame:
     session = requests.Session()
@@ -118,9 +108,6 @@ def load_all_data():
         st.error(str(e))
         return None
 
-# ════════════════════════════════════════════════════════════════════
-#  MANUAL UPLOAD FALLBACK
-# ════════════════════════════════════════════════════════════════════
 def manual_upload_ui():
     st.warning("⚠️ Google Drive IDs not configured. Upload your 8 CSV files below.")
     c1, c2 = st.columns(2)
@@ -144,9 +131,7 @@ def manual_upload_ui():
                 pd.read_csv(uip_f), pd.read_csv(uop_f))
     return None
 
-# ════════════════════════════════════════════════════════════════════
-#  SIDEBAR
-# ════════════════════════════════════════════════════════════════════
+
 st.sidebar.title("🏥 Healthcare Fraud Detection")
 st.sidebar.markdown("---")
 page = st.sidebar.radio("Navigate", [
@@ -158,9 +143,7 @@ page = st.sidebar.radio("Navigate", [
     "💡 Business Recommendations",
 ])
 
-# ════════════════════════════════════════════════════════════════════
-#  LOAD DATA
-# ════════════════════════════════════════════════════════════════════
+
 data = load_all_data()
 if data is None:
     data = manual_upload_ui()
@@ -171,9 +154,7 @@ if data is None:
 tl, tb, tip, top, ul, ub, uip, uop = data
 st.sidebar.success("✅ Data loaded")
 
-# ════════════════════════════════════════════════════════════════════
-#  FEATURE ENGINEERING
-# ════════════════════════════════════════════════════════════════════
+
 FEATURE_COLS = [
     'IP_TotalClaims','IP_TotalReimbursed','IP_AvgReimbursed','IP_MaxReimbursed',
     'IP_TotalDeductible','IP_AvgAdmitDuration','IP_AvgClaimDuration',
@@ -255,9 +236,6 @@ def prepare_X(df):
 
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.pkl")
 
-# ════════════════════════════════════════════════════════════════════
-#  PAGE 1 — Overview
-# ════════════════════════════════════════════════════════════════════
 if page == "📋 Project Overview":
     st.title("🏥 Healthcare Provider Fraud Detection")
     c1,c2,c3,c4 = st.columns(4)
@@ -294,9 +272,7 @@ This app builds a **binary classifier** to flag fraudulent providers.
     for i,(col,step) in enumerate(zip(st.columns(len(steps)),steps)):
         col.markdown(f"**Step {i+1}**"); col.success(step)
 
-# ════════════════════════════════════════════════════════════════════
-#  PAGE 2 — EDA
-# ════════════════════════════════════════════════════════════════════
+
 elif page == "📊 Exploratory Data Analysis":
     st.title("📊 Exploratory Data Analysis")
     t1,t2,t3,t4 = st.tabs(["Fraud Labels","Beneficiary","Inpatient","Outpatient"])
@@ -357,9 +333,7 @@ elif page == "📊 Exploratory Data Analysis":
         axes[1].set_title("Claims per Provider")
         plt.tight_layout(); st.pyplot(fig); plt.close()
 
-# ════════════════════════════════════════════════════════════════════
-#  PAGE 3 — Feature Engineering
-# ════════════════════════════════════════════════════════════════════
+
 elif page == "⚙️  Feature Engineering":
     st.title("⚙️ Feature Engineering")
     with st.spinner("Building features…"):
@@ -381,9 +355,7 @@ elif page == "⚙️  Feature Engineering":
     sd['Ratio Fraud/Legit'] = (sd['Fraudulent']/sd['Legitimate']).round(2)
     st.dataframe(sd.style.background_gradient(cmap='RdYlGn_r',subset=['Ratio Fraud/Legit']), use_container_width=True)
 
-# ════════════════════════════════════════════════════════════════════
-#  PAGE 4 — Model Training
-# ════════════════════════════════════════════════════════════════════
+
 elif page == "🤖 Model Training & Evaluation":
     st.title("🤖 Model Training & Evaluation")
     with st.spinner("Building features…"):
@@ -454,9 +426,6 @@ elif page == "🤖 Model Training & Evaluation":
     else:
         st.info("👆 Click **Train Model** to begin.")
 
-# ════════════════════════════════════════════════════════════════════
-#  PAGE 5 — Predict Unseen
-# ════════════════════════════════════════════════════════════════════
 elif page == "🔍 Predict on Unseen Data":
     st.title("🔍 Predict on Unseen Data")
     if not os.path.exists(MODEL_PATH):
@@ -506,9 +475,7 @@ elif page == "🔍 Predict on Unseen Data":
         data=results.to_csv(index=False).encode(),
         file_name="Submission_Predictions.csv", mime="text/csv")
 
-# ════════════════════════════════════════════════════════════════════
-#  PAGE 6 — Recommendations
-# ════════════════════════════════════════════════════════════════════
+
 elif page == "💡 Business Recommendations":
     st.title("💡 Business Recommendations")
     for title,desc in {
